@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FIV Dashboard SeU</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --accent: #1a6ed8;
+    --accent2: #58a6ff;
+    --green: #2ea043;
+    --yellow: #d29922;
+    --red: #da3633;
+    --orange: #e3790a;
+    --purple: #8957e5;
+    --gray: #8b949e;
+    --text: #e6edf3;
+    --text2: #c9d1d9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; }
+
+  /* HEADER */
+  .header {
+    background: #0a0f16;
+    border-bottom: 1px solid var(--border);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-logo { font-size: 20px; }
+  .header-title { font-weight: 700; font-size: 15px; color: var(--text); flex: 1; }
+  .header-sub { font-size: 11px; color: var(--gray); }
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--yellow);
+    flex-shrink: 0;
+  }
+  .status-dot.online { background: var(--green); }
+  .status-label { font-size: 10px; color: var(--gray); }
+
+  /* FILTERS */
+  .filters {
+    padding: 10px 16px;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--border);
+    background: #0d1117;
+    position: sticky;
+    top: 49px;
+    z-index: 99;
+  }
+  .filter-btn {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--gray);
+    border-radius: 16px;
+    padding: 4px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .filter-btn:active, .filter-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+
+  /* LAYOUT */
+  .layout {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+  }
+  /* MAIN */
+  .main {
+    flex: 1;
+    padding: 12px 16px;
+    min-width: 0;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 300px;
+    flex-shrink: 0;
+    padding: 12px 14px 12px 0;
+    position: sticky;
+    top: 98px;
+    height: calc(100vh - 98px);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+  }
+  .sidebar-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .sidebar-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--gray);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .sidebar-item {
+    background: var(--bg);
+    border-radius: 7px;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+  .sidebar-item:last-child { margin-bottom: 0; }
+  .sidebar-item strong { display: block; font-size: 11.5px; margin-bottom: 2px; }
+  .sidebar-item .si-date { font-size: 11px; color: var(--gray); margin-top: 2px; }
+  .sidebar-item.red { border-left: 3px solid var(--red); color: #ff7b72; }
+  .sidebar-item.orange { border-left: 3px solid var(--orange); color: #ffa657; }
+  .sidebar-item.yellow { border-left: 3px solid var(--yellow); color: #e3b341; }
+  .sidebar-item.green { border-left: 3px solid var(--green); color: #3fb950; }
+  .sidebar-empty { font-size: 12px; color: var(--gray); text-align: center; padding: 10px 0; }
+
+  /* TODO */
+  .todo-input-row {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+  .todo-input {
+    flex: 1;
+    min-width: 0;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 12px;
+    padding: 5px 8px;
+    outline: none;
+  }
+  .todo-input:focus { border-color: var(--accent); }
+  .todo-select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--gray);
+    font-size: 11px;
+    padding: 5px 4px;
+    cursor: pointer;
+    outline: none;
+  }
+  .todo-add-btn {
+    background: var(--accent);
+    border: none;
+    color: white;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .todo-section-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    margin: 10px 0 4px;
+  }
+  .todo-section-label.oggi { color: var(--red); }
+  .todo-section-label.settimana { color: var(--yellow); }
+  .todo-cat-group { margin-bottom: 6px; }
+  .todo-cat-label {
+    font-size: 10px;
+    color: var(--gray);
+    font-weight: 600;
+    margin: 6px 0 2px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .todo-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(48,54,61,0.5);
+  }
+  .todo-item:last-child { border-bottom: none; }
+  .todo-item input[type="checkbox"] {
+    margin-top: 2px;
+    width: 14px; height: 14px;
+    accent-color: var(--green);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .todo-text {
+    flex: 1;
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.4;
+  }
+  .todo-text.done { text-decoration: line-through; color: var(--gray); }
+  .todo-del {
+    background: none;
+    border: none;
+    color: var(--gray);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 0 2px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .todo-del:hover { color: var(--red); }
+
+  /* SECTION TITLE */
+  .section-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--gray);
+    margin: 16px 0 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title span {
+    background: var(--border);
+    color: var(--text2);
+    border-radius: 10px;
+    padding: 1px 7px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  /* CARDS */
+  .cards { display: flex; flex-direction: column; gap: 8px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    border-left: 3px solid var(--border);
+  }
+  .card.raduno { border-left-color: var(--accent); }
+  .card.regata { border-left-color: var(--green); }
+  .card.urgent { border-left-color: var(--red); }
+  .card.soon { border-left-color: var(--orange); }
+
+  .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .card-class { font-weight: 700; font-size: 13px; color: var(--text); }
+  .card-type {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  .badge-raduno { background: rgba(26,110,216,0.2); color: var(--accent2); }
+  .badge-regata { background: rgba(46,160,67,0.2); color: #3fb950; }
+
+  .card-location { font-size: 12px; color: var(--gray); margin-top: 2px; }
+  .card-dates { font-size: 12px; color: var(--text2); margin-top: 4px; }
+
+  /* ALERT DEADLINE */
+  .card-alert {
+    margin-top: 8px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-weight: 500;
+  }
+  .alert-red { background: rgba(218,54,51,0.15); color: #ff7b72; border-left: 2px solid var(--red); }
+  .alert-orange { background: rgba(227,121,10,0.15); color: #ffa657; border-left: 2px solid var(--orange); }
+  .alert-yellow { background: rgba(210,153,34,0.15); color: #e3b341; border-left: 2px solid var(--yellow); }
+  .alert-purple { background: rgba(137,87,229,0.15); color: #bc8cff; border-left: 2px solid var(--purple); }
+
+  /* CHECKBOXES */
+  .card-checks {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .check-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+  }
+  .check-item input[type="checkbox"] {
+    width: 17px;
+    height: 17px;
+    accent-color: var(--green);
+    cursor: pointer;
+  }
+  .check-item label {
+    font-size: 12.5px;
+    color: var(--text2);
+    cursor: pointer;
+    user-select: none;
+  }
+  .check-item input:checked + label {
+    color: var(--green);
+    text-decoration: line-through;
+    text-decoration-color: rgba(46,160,67,0.5);
+  }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    color: var(--gray);
+    padding: 40px 16px;
+    font-size: 13px;
+  }
+
+  /* POPUP */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 200;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px 16px 0 0;
+    padding: 20px 18px 32px;
+    width: 100%;
+    max-width: 480px;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+  }
+  .modal-close {
+    position: absolute;
+    top: 14px; right: 16px;
+    background: var(--border);
+    border: none;
+    color: var(--text);
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .modal-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .modal-date { font-size: 12px; color: var(--gray); margin-bottom: 14px; }
+  .popup-section-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--gray);
+    margin: 14px 0 6px;
+  }
+  .popup-item {
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 9px 12px;
+    margin-bottom: 6px;
+    font-size: 12.5px;
+  }
+  .popup-item strong { color: var(--accent2); display: block; margin-bottom: 2px; }
+  .popup-item.red { border-left: 3px solid var(--red); }
+  .popup-item.orange { border-left: 3px solid var(--orange); }
+  .popup-item.yellow { border-left: 3px solid var(--yellow); }
+  .popup-item.green { border-left: 3px solid var(--green); }
+  .popup-item.purple { border-left: 3px solid var(--purple); }
+
+  /* LOADING */
+  .loading {
+    text-align: center;
+    color: var(--gray);
+    padding: 60px 0;
+    font-size: 13px;
+  }
+
+  /* MAIL TEMPLATE */
+  .mail-section { margin-top: 14px; }
+  .mail-toggle {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--accent2);
+    border-radius: 6px;
+    padding: 5px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+  }
+  .mail-body {
+    display: none;
+    margin-top: 8px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 12px;
+    color: var(--text2);
+    white-space: pre-wrap;
+    line-height: 1.5;
+  }
+  .mail-body.open { display: block; }
+  .copy-btn {
+    margin-top: 6px;
+    background: var(--accent);
+    border: none;
+    color: white;
+    border-radius: 6px;
+    padding: 5px 14px;
+    font-size: 12px;
+    cursor: pointer;
+    float: right;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">⛵</div>
+  <div style="flex:1">
+    <div class="header-title">FIV Dashboard SeU</div>
+    <div class="header-sub">Squadra Sviluppo e Under</div>
+  </div>
+  <div id="status-dot" class="status-dot"></div>
+  <div id="status-label" class="status-label">…</div>
+</div>
+
+<div class="filters" id="filters">
+  <button class="filter-btn active" onclick="setFilter('all',this)">Tutti</button>
+  <button class="filter-btn" onclick="setFilter('urgent',this)">🔴 Urgenti</button>
+  <button class="filter-btn" onclick="setFilter('raduni',this)">Raduni</button>
+  <button class="filter-btn" onclick="setFilter('regate',this)">Regate</button>
+  <button class="filter-btn" onclick="setFilter('49er',this)">49er</button>
+  <button class="filter-btn" onclick="setFilter('49erFX',this)">49erFX</button>
+  <button class="filter-btn" onclick="setFilter('nacra',this)">Nacra 17</button>
+  <button class="filter-btn" onclick="setFilter('470',this)">470</button>
+  <button class="filter-btn" onclick="setFilter('ilca7',this)">ILCA 7</button>
+  <button class="filter-btn" onclick="setFilter('ilca6',this)">ILCA 6</button>
+  <button class="filter-btn" onclick="setFilter('iqm',this)">iQFoil M</button>
+  <button class="filter-btn" onclick="setFilter('iqf',this)">iQFoil F</button>
+  <button class="filter-btn" onclick="setFilter('kitem',this)">Kite M</button>
+  <button class="filter-btn" onclick="setFilter('kitef',this)">Kite F</button>
+</div>
+
+<div class="layout">
+  <div class="main" id="main">
+    <div class="loading">Caricamento dati…</div>
+  </div>
+
+  <div class="sidebar">
+    <!-- AVVISI -->
+    <div class="sidebar-box">
+      <div class="sidebar-title">📋 Avvisi del giorno <span id="avvisi-count" style="background:var(--border);border-radius:8px;padding:1px 7px;font-size:11px;"></span></div>
+      <div id="sidebar-date" style="font-size:11px;color:var(--gray);margin-bottom:8px;"></div>
+      <div id="sidebar-avvisi"><div class="sidebar-empty">Nessun avviso</div></div>
+    </div>
+
+    <!-- TODO -->
+    <div class="sidebar-box">
+      <div class="sidebar-title">✅ Cose da fare</div>
+      <div class="todo-input-row">
+        <input class="todo-input" id="todo-input" type="text" placeholder="Aggiungi attività…" onkeydown="if(event.key==='Enter')addTodo()">
+        <select class="todo-select" id="todo-cat">
+          <option value="telefonate">📞</option>
+          <option value="mail">✉️</option>
+          <option value="altro">📌</option>
+        </select>
+        <select class="todo-select" id="todo-when">
+          <option value="oggi">Oggi</option>
+          <option value="settimana">Sett.</option>
+        </select>
+        <button class="todo-add-btn" onclick="addTodo()">+</button>
+      </div>
+      <div id="todo-oggi-section">
+        <div class="todo-section-label oggi">Oggi</div>
+        <div id="todo-oggi-list"></div>
+      </div>
+      <div id="todo-sett-section">
+        <div class="todo-section-label settimana">Questa settimana</div>
+        <div id="todo-sett-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const APPS_SCRIPT_URL = '/api/proxy';
+
+// ─── STORAGE HELPERS ────────────────────────────────────────────
+function storageKey(eventId, field) { return `fiv_${eventId}_${field}`; }
+
+function getCheck(eventId, field) {
+  try { return localStorage.getItem(storageKey(eventId, field)) === '1'; } catch(e) { return false; }
+}
+function setCheck(eventId, field, val) {
+  try { localStorage.setItem(storageKey(eventId, field), val ? '1' : '0'); } catch(e) {}
+}
+
+// ─── DATA FALLBACK ───────────────────────────────────────────────
+// Dati di esempio per modalità offline
+const FALLBACK_EVENTS = [
+  { id: 'ev001', classe: '49er', tipo: 'regata', nome: 'Europei Assoluti', luogo: 'Kiel, Germania', dataInizio: '2026-07-01', dataFine: '2026-07-06' },
+  { id: 'ev002', classe: 'ILCA 7', tipo: 'raduno', nome: 'Raduno SeU', luogo: 'Riva del Garda', dataInizio: '2026-07-08', dataFine: '2026-07-12' },
+  { id: 'ev003', classe: 'iQFoil M', tipo: 'regata', nome: 'Mondiali Under', luogo: 'La Rochelle, Francia', dataInizio: '2026-07-20', dataFine: '2026-07-26' },
+  { id: 'ev004', classe: 'Nacra 17', tipo: 'raduno', nome: 'Allenamento Napoli', luogo: 'Napoli', dataInizio: '2026-07-14', dataFine: '2026-07-17' },
+  { id: 'ev005', classe: 'Formula Kite M', tipo: 'regata', nome: 'TPS Kite', luogo: 'Hyères, Francia', dataInizio: '2026-08-05', dataFine: '2026-08-09' },
+  { id: 'ev006', classe: '470', tipo: 'raduno', nome: 'Raduno Tecnico', luogo: 'Brindisi', dataInizio: '2026-07-28', dataFine: '2026-07-31' },
+];
+
+// ─── STATE ───────────────────────────────────────────────────────
+let allEvents = [];
+let currentFilter = 'all';
+const TODAY = new Date();
+TODAY.setHours(0,0,0,0);
+
+// ─── FETCH DATA ──────────────────────────────────────────────────
+async function loadData() {
+  try {
+    const resp = await fetch(APPS_SCRIPT_URL);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    allEvents = parseSheetData(data);
+    document.getElementById('status-dot').classList.add('online');
+    document.getElementById('status-label').textContent = 'Live';
+  } catch(err) {
+    allEvents = FALLBACK_EVENTS.map(e => ({
+      ...e,
+      start: new Date(e.dataInizio),
+      end: new Date(e.dataFine),
+    }));
+    document.getElementById('status-label').textContent = 'Offline';
+    console.warn('Fetch failed:', err.message);
+  }
+  render();
+  checkPopup();
+}
+
+function parseSheetData(data) {
+  if (!Array.isArray(data) || !data.length) return FALLBACK_EVENTS.map(e => ({...e, start: new Date(e.dataInizio), end: new Date(e.dataFine)}));
+
+  const CLASS_NAMES = {
+    '49er':'49er','49erSU':'49er SeU','FX':'49erFX','FXSU':'49erFX SeU',
+    'Nacra':'Nacra 17','NacraSU':'Nacra 17 SeU','470':'470','470SU':'470 SeU',
+    'ILCA7':'ILCA 7','ILCA7SU':'ILCA 7 SeU','ILCA6':'ILCA 6','ILCA6SU':'ILCA 6 SeU',
+    'iQM':'iQFoil M','iQMSU':'iQFoil M SeU','iQF':'iQFoil F','iQFSU':'iQFoil F SeU',
+    'KiteM':'Formula Kite M','KiteF':'Formula Kite F'
+  };
+
+  return data.map((row, i) => ({
+    id: "ev_" + row.class + "_" + row.start + "_" + i,
+    classe: CLASS_NAMES[row.class] || row.class,
+    tipo: row.is_regata ? 'regata' : 'raduno',
+    nome: row.location || '',
+    luogo: row.location || '',
+    dataInizio: row.start,
+    dataFine: row.end,
+    start: new Date(row.start),
+    end: new Date(row.end),
+  }));
+}
+
+// ─── DEADLINE LOGIC ──────────────────────────────────────────────
+function daysDiff(date) {
+  const d = new Date(date); d.setHours(0,0,0,0);
+  return Math.round((d - TODAY) / 86400000);
+}
+
+function getDeadlines(ev) {
+  const deadlines = [];
+  const dStart = daysDiff(ev.start);
+  const dEnd = daysDiff(ev.end);
+
+  if (ev.tipo === 'raduno') {
+    const dConv = dStart - 15;
+    const dAgg = dStart - 8;
+    const convDone = getCheck(ev.id, 'mailconv');
+    const mailDone = getCheck(ev.id, 'mailatt');
+
+    // Convocazione Bodrato: mostra finché non spuntata, anche se scaduta
+    // (ma solo se il raduno non è ancora finito)
+    if (!convDone && dEnd >= 0 && dConv <= 20) {
+      deadlines.push({ tipo: 'conv', label: '📨 Richiesta convocazione Bodrato', daysLeft: dConv });
+    }
+    // Aggregazione: mostra solo finché non scaduta (dAgg >= 0)
+    if (dEnd >= 0 && dAgg >= 0 && dAgg <= 15) {
+      deadlines.push({ tipo: 'agg', label: '📋 Scadenza aggregazioni', daysLeft: dAgg });
+    }
+  }
+
+  if (ev.tipo === 'regata') {
+    const dPrev = dStart - 7;
+    const prevDone = getCheck(ev.id, 'prev');
+    // Previsione: mostra finché non spuntata, regata non iniziata
+    if (!prevDone && dStart >= 0 && dPrev <= 14) {
+      deadlines.push({ tipo: 'prev', label: '🎯 Previsione risultati dai coach', daysLeft: dPrev });
+    }
+    // Allegato IV: entro 30gg dalla fine
+    const daysToAlleg = daysDiff(new Date(ev.end.getTime() + 30 * 86400000));
+    if (daysToAlleg >= 0 && daysToAlleg <= 15 && dEnd < 0) {
+      deadlines.push({ tipo: 'alleg', label: '🧾 Allegato IV rendicontazione spese', daysLeft: daysToAlleg });
+    }
+  }
+
+  return deadlines;
+}
+
+function alertClass(daysLeft) {
+  if (daysLeft < 0) return 'alert-red';
+  if (daysLeft <= 2) return 'alert-red';
+  if (daysLeft <= 5) return 'alert-orange';
+  if (daysLeft <= 10) return 'alert-yellow';
+  return 'alert-yellow';
+}
+
+function alertText(daysLeft) {
+  if (daysLeft < 0) return `Scaduta ${Math.abs(daysLeft)}g fa`;
+  if (daysLeft === 0) return 'Scade oggi';
+  if (daysLeft === 1) return 'Scade domani';
+  return `Tra ${daysLeft} giorni`;
+}
+
+// ─── MAIL TEMPLATE ───────────────────────────────────────────────
+function mailBodyConv(ev) {
+  return `Oggetto: Richiesta convocazione – ${ev.classe} ${ev.nome}
+
+Buongiorno,
+
+ti chiedo di procedere con la convocazione ufficiale per il seguente raduno:
+
+Classe: ${ev.classe}
+Attività: ${ev.nome}
+Luogo: ${ev.luogo}
+Date: ${fmtDate(ev.start)} – ${fmtDate(ev.end)}
+Squadra: SeU
+
+[inserire nominativi atleti]
+
+Grazie,
+Egon Vigna
+DT SeU – FIV`;
+}
+
+function mailBodyPrev(ev) {
+  return `Oggetto: Previsione risultati – ${ev.classe} ${ev.nome}
+
+Ciao,
+
+in vista della regata:
+
+Classe: ${ev.classe}
+Evento: ${ev.nome}
+Luogo: ${ev.luogo}
+Date: ${fmtDate(ev.start)} – ${fmtDate(ev.end)}
+
+ti chiedo di inviarmi entro 2 giorni una previsione sui risultati attesi per gli atleti SeU (obiettivo individuale, stato di forma, eventuali criticità).
+
+Grazie,
+Egon Vigna
+DT SeU – FIV`;
+}
+
+function fmtDate(d) {
+  if (!d || isNaN(d)) return '–';
+  return d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function fmtRange(ev) {
+  return `${fmtDate(ev.start)} → ${fmtDate(ev.end)}`;
+}
+
+// ─── FILTER ──────────────────────────────────────────────────────
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+function matchFilter(ev) {
+  if (currentFilter === 'all') return true;
+  if (currentFilter === 'raduni') return ev.tipo === 'raduno';
+  if (currentFilter === 'regate') return ev.tipo === 'regata';
+  if (currentFilter === 'urgent') {
+    const dl = getDeadlines(ev);
+    return dl.some(d => d.daysLeft >= 0 && d.daysLeft <= 5);
+  }
+  const c = ev.classe.toLowerCase();
+  if (currentFilter === '49er') return c.includes('49er') && !c.includes('fx');
+  if (currentFilter === '49erFX') return c.includes('49erfx') || c.includes('49er fx');
+  if (currentFilter === 'nacra') return c.includes('nacra');
+  if (currentFilter === '470') return c.includes('470');
+  if (currentFilter === 'ilca7') return /ilca 7/.test(c);
+  if (currentFilter === 'ilca6') return /ilca 6/.test(c);
+  if (currentFilter === 'iqm') return c.includes('iqfoil m');
+  if (currentFilter === 'iqf') return c.includes('iqfoil f');
+  if (currentFilter === 'kitem') return c.includes('kite m');
+  if (currentFilter === 'kitef') return c.includes('kite f');
+  return true;
+}
+
+// ─── RENDER ──────────────────────────────────────────────────────
+function render() {
+  const main = document.getElementById('main');
+  const now = TODAY;
+
+  const filtered = allEvents.filter(matchFilter);
+  const active = filtered.filter(ev => ev.start <= now && ev.end >= now);
+  const upcoming = filtered.filter(ev => ev.start > now).sort((a,b) => a.start - b.start);
+  const past = filtered.filter(ev => ev.end < now).sort((a,b) => b.end - a.end);
+
+  let html = '';
+
+  if (active.length) {
+    html += `<div class="section-title">🔴 In corso <span>${active.length}</span></div><div class="cards">`;
+    active.forEach(ev => html += makeCard(ev, true));
+    html += '</div>';
+  }
+
+  if (upcoming.length) {
+    html += `<div class="section-title">📅 In programma <span>${upcoming.length}</span></div><div class="cards">`;
+    upcoming.forEach(ev => html += makeCard(ev, false));
+    html += '</div>';
+  }
+
+  if (past.length) {
+    html += `<div class="section-title" style="cursor:pointer" onclick="togglePast(this)">
+      <span style="color:var(--gray)">▶</span>&nbsp;
+      Passati <span>${past.length}</span>
+    </div>
+    <div id="past-cards" class="cards" style="display:none">`;
+    past.forEach(ev => html += makeCard(ev, false));
+    html += '</div>';
+  }
+
+  if (!html) html = '<div class="empty-state">Nessuna attività trovata</div>';
+  main.innerHTML = html;
+  renderSidebarAvvisi();
+}
+
+function togglePast(el) {
+  const cards = document.getElementById('past-cards');
+  const arrow = el.querySelector('span');
+  if (cards.style.display === 'none') {
+    cards.style.display = 'flex';
+    cards.style.flexDirection = 'column';
+    cards.style.gap = '8px';
+    arrow.textContent = '▼';
+  } else {
+    cards.style.display = 'none';
+    arrow.textContent = '▶';
+  }
+}
+
+function makeCard(ev, isActive) {
+  const deadlines = getDeadlines(ev);
+  const isReg = ev.tipo === 'regata';
+  const urgentDl = deadlines.find(d => d.daysLeft >= -3 && d.daysLeft <= 5);
+
+  let borderClass = isReg ? 'regata' : 'raduno';
+  if (urgentDl) borderClass = urgentDl.daysLeft <= 2 ? 'urgent' : 'soon';
+
+  let html = `<div class="card ${borderClass}">
+    <div class="card-header">
+      <div>
+        <div class="card-class">${ev.classe}</div>
+        <div class="card-location">📍 ${ev.luogo || '–'}</div>
+      </div>
+      <span class="card-type ${isReg ? 'badge-regata' : 'badge-raduno'}">${isReg ? 'Regata' : 'Raduno'}</span>
+    </div>
+    ${ev.nome ? `<div class="card-dates" style="margin-top:4px;font-weight:500">${ev.nome}</div>` : ''}
+    <div class="card-dates">${fmtRange(ev)}</div>`;
+
+  // Alert deadline
+  deadlines.forEach(dl => {
+    const cls = alertClass(dl.daysLeft);
+    html += `<div class="card-alert ${cls}">${dl.label} — <strong>${alertText(dl.daysLeft)}</strong></div>`;
+  });
+
+  // Checkboxes
+  const hasConv = ev.tipo === 'raduno';
+  const hasPrev = ev.tipo === 'regata';
+
+  html += `<div class="card-checks">`;
+
+  if (hasConv) {
+    const mailAttChk = getCheck(ev.id, 'mailatt') ? 'checked' : '';
+    const mailConvChk = getCheck(ev.id, 'mailconv') ? 'checked' : '';
+    html += `
+      <label class="check-item">
+        <input type="checkbox" ${mailAttChk} onchange="saveCheck('${ev.id}','mailatt',this.checked)">
+        <label>Mail attività inviata</label>
+      </label>
+      <label class="check-item">
+        <input type="checkbox" ${mailConvChk} onchange="saveCheck('${ev.id}','mailconv',this.checked)">
+        <label>Mail convocazione inviata</label>
+      </label>`;
+  }
+
+  if (hasPrev) {
+    const prevChk = getCheck(ev.id, 'prev') ? 'checked' : '';
+    html += `
+      <label class="check-item">
+        <input type="checkbox" ${prevChk} onchange="saveCheck('${ev.id}','prev',this.checked)">
+        <label>Previsione richiesta</label>
+      </label>`;
+  }
+
+  html += `</div>`;
+
+  // Mail template per raduno (convocazione)
+  if (hasConv) {
+    html += `<div class="mail-section">
+      <button class="mail-toggle" onclick="toggleMail(this)">✉️ Mostra template mail convocazione</button>
+      <div class="mail-body">${mailBodyConv(ev)}<br><button class="copy-btn" onclick="copyMail(this)">Copia</button></div>
+    </div>`;
+  }
+
+  // Mail template per regata (previsione)
+  if (hasPrev) {
+    html += `<div class="mail-section">
+      <button class="mail-toggle" onclick="toggleMail(this)">🎯 Mostra template previsione risultati</button>
+      <div class="mail-body">${mailBodyPrev(ev)}<br><button class="copy-btn" onclick="copyMail(this)">Copia</button></div>
+    </div>`;
+  }
+
+  html += `</div>`;
+  return html;
+}
+
+function saveCheck(eventId, field, val) {
+  setCheck(eventId, field, val);
+}
+
+function toggleMail(btn) {
+  const body = btn.nextElementSibling;
+  body.classList.toggle('open');
+  btn.textContent = body.classList.contains('open')
+    ? btn.textContent.replace('Mostra', 'Nascondi')
+    : btn.textContent.replace('Nascondi', 'Mostra');
+}
+
+function copyMail(btn) {
+  const text = btn.parentElement.textContent.replace('Copia','').trim();
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copiato ✓';
+    setTimeout(() => btn.textContent = 'Copia', 1800);
+  });
+}
+
+// ─── POPUP AVVISI ────────────────────────────────────────────────
+function checkPopup() {
+  const todayKey = TODAY.toISOString().split('T')[0];
+  const lastShown = localStorage.getItem('fiv_popup_date');
+  if (lastShown === todayKey) return;
+
+  const avvisi = collectAvvisi();
+  if (!avvisi.length) return;
+
+  localStorage.setItem('fiv_popup_date', todayKey);
+  showPopup(avvisi);
+}
+
+function collectAvvisi() {
+  const avvisi = [];
+
+  // Regate in corso oggi
+  allEvents.filter(ev => ev.tipo === 'regata' && ev.start <= TODAY && ev.end >= TODAY).forEach(ev => {
+    avvisi.push({ tipo: 'regata_corso', classe: ev.classe, nome: ev.nome, luogo: ev.luogo, daysLeft: 0 });
+  });
+
+  // Deadline entro 15 giorni
+  allEvents.forEach(ev => {
+    getDeadlines(ev).forEach(dl => {
+      if (dl.daysLeft >= 0 && dl.daysLeft <= 15) {
+        avvisi.push({
+          tipo: dl.tipo,
+          label: dl.label,
+          classe: ev.classe,
+          nome: ev.nome,
+          daysLeft: dl.daysLeft,
+        });
+      }
+    });
+  });
+
+  return avvisi.sort((a,b) => a.daysLeft - b.daysLeft);
+}
+
+function urgencyColor(daysLeft) {
+  if (daysLeft <= 1) return 'red';
+  if (daysLeft <= 4) return 'orange';
+  if (daysLeft <= 7) return 'yellow';
+  return 'green';
+}
+
+function showPopup(avvisi) {
+  document.getElementById('popup-date').textContent =
+    TODAY.toLocaleDateString('it-IT', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+
+  const regate = avvisi.filter(a => a.tipo === 'regata_corso');
+  const scadenze = avvisi.filter(a => a.tipo !== 'regata_corso');
+
+  let html = '';
+
+  if (regate.length) {
+    html += `<div class="popup-section-title">⚓ Regate in corso oggi</div>`;
+    regate.forEach(a => {
+      html += `<div class="popup-item green">
+        <strong>${a.classe} – ${a.nome}</strong>
+        📍 ${a.luogo}
+      </div>`;
+    });
+  }
+
+  if (scadenze.length) {
+    html += `<div class="popup-section-title">⏰ Scadenze nei prossimi 15 giorni</div>`;
+    scadenze.forEach(a => {
+      const col = urgencyColor(a.daysLeft);
+      const txt = a.daysLeft === 0 ? 'Oggi' : a.daysLeft === 1 ? 'Domani' : `Tra ${a.daysLeft} giorni`;
+      html += `<div class="popup-item ${col}">
+        <strong>${a.classe} – ${a.nome}</strong>
+        ${a.label} — <em>${txt}</em>
+      </div>`;
+    });
+  }
+
+  document.getElementById('popup-content').innerHTML = html;
+  document.getElementById('avvisi-popup').classList.add('open');
+}
+
+function closePopup() {
+  document.getElementById('avvisi-popup').classList.remove('open');
+}
+
+// ─── NORMATIVA FISSA ─────────────────────────────────────────────
+// Aggiunge scadenze fisse FIV nel popup (Piano Sviluppo)
+function getNormativaAvvisi() {
+  const fixed = [];
+  const pianoScad = new Date('2026-11-15');
+  const pianoEsiti = new Date('2026-11-30');
+
+  [pianoScad, pianoEsiti].forEach((d, i) => {
+    const dl = daysDiff(d);
+    if (dl >= 0 && dl <= 15) {
+      fixed.push({
+        tipo: 'normativa',
+        label: i === 0 ? '📁 Piano Sviluppo – scadenza domande' : '📁 Piano Sviluppo – comunicazione esiti',
+        classe: 'FIV',
+        nome: i === 0 ? '15 novembre' : '30 novembre',
+        daysLeft: dl,
+      });
+    }
+  });
+  return fixed;
+}
+
+// ─── SIDEBAR AVVISI ─────────────────────────────────────────────
+function renderSidebarAvvisi() {
+  const avvisi = collectAvvisi();
+  const el = document.getElementById('sidebar-avvisi');
+  const countEl = document.getElementById('avvisi-count');
+  const dateEl = document.getElementById('sidebar-date');
+
+  dateEl.textContent = TODAY.toLocaleDateString('it-IT', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+
+  const active = avvisi.filter(a => a.tipo !== 'regata_corso');
+  const regate = avvisi.filter(a => a.tipo === 'regata_corso');
+  countEl.textContent = avvisi.length || '';
+
+  if (!avvisi.length) {
+    el.innerHTML = '<div class="sidebar-empty">Nessun avviso attivo</div>';
+    return;
+  }
+
+  let html = '';
+  if (regate.length) {
+    regate.forEach(a => {
+      html += `<div class="sidebar-item green">
+        <strong>⚓ ${a.classe} – ${a.nome}</strong>
+        📍 ${a.luogo}
+        <div class="si-date">In corso oggi</div>
+      </div>`;
+    });
+  }
+  active.forEach(a => {
+    const col = urgencyColor(a.daysLeft);
+    const txt = a.daysLeft === 0 ? 'Scade oggi' : a.daysLeft === 1 ? 'Scade domani' : `Tra ${a.daysLeft} giorni`;
+    // Calcola data effettiva scadenza
+    const scadDate = new Date(TODAY.getTime() + a.daysLeft * 86400000);
+    const scadStr = scadDate.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    html += `<div class="sidebar-item ${col}">
+      <strong>${a.label}</strong>
+      ${a.classe} – ${a.nome}
+      <div class="si-date">📅 ${scadStr} — ${txt}</div>
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+
+// ─── TODO ────────────────────────────────────────────────────────
+function loadTodos() {
+  try { return JSON.parse(localStorage.getItem('fiv_todos') || '[]'); } catch(e) { return []; }
+}
+function saveTodos(todos) {
+  try { localStorage.setItem('fiv_todos', JSON.stringify(todos)); } catch(e) {}
+}
+
+const CAT_ICONS = { telefonate: '📞', mail: '✉️', altro: '📌' };
+const CAT_LABELS = { telefonate: 'Telefonate', mail: 'Mail', altro: 'Altro' };
+const CATS = ['telefonate', 'mail', 'altro'];
+
+function addTodo() {
+  const input = document.getElementById('todo-input');
+  const when = document.getElementById('todo-when').value;
+  const cat = document.getElementById('todo-cat').value;
+  const text = input.value.trim();
+  if (!text) return;
+  const todos = loadTodos();
+  todos.push({ id: Date.now(), text, when, cat, done: false });
+  saveTodos(todos);
+  input.value = '';
+  renderTodos();
+}
+
+function toggleTodo(id) {
+  const todos = loadTodos();
+  const t = todos.find(t => t.id === id);
+  if (t) t.done = !t.done;
+  saveTodos(todos);
+  renderTodos();
+}
+
+function deleteTodo(id) {
+  const todos = loadTodos().filter(t => t.id !== id);
+  saveTodos(todos);
+  renderTodos();
+}
+
+function makeItem(t) {
+  return `<div class="todo-item">
+    <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTodo(${t.id})">
+    <span class="todo-text ${t.done ? 'done' : ''}">${t.text}</span>
+    <button class="todo-del" onclick="deleteTodo(${t.id})">×</button>
+  </div>`;
+}
+
+function renderSection(todos, elId) {
+  const el = document.getElementById(elId);
+  if (!todos.length) {
+    el.innerHTML = '<div class="sidebar-empty" style="padding:4px 0">Nessuna attività</div>';
+    return;
+  }
+  let html = '';
+  CATS.forEach(cat => {
+    const items = todos.filter(t => (t.cat || 'altro') === cat);
+    if (!items.length) return;
+    html += `<div class="todo-cat-group">
+      <div class="todo-cat-label">${CAT_ICONS[cat]} ${CAT_LABELS[cat]}</div>
+      ${items.map(makeItem).join('')}
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+
+function renderTodos() {
+  const todos = loadTodos();
+  renderSection(todos.filter(t => t.when === 'oggi'), 'todo-oggi-list');
+  renderSection(todos.filter(t => t.when === 'settimana'), 'todo-sett-list');
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────
+loadData();
+renderTodos();
+</script>
+</body>
+</html>
