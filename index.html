@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FIV Dashboard SeU</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --accent: #1a6ed8;
+    --accent2: #58a6ff;
+    --green: #2ea043;
+    --yellow: #d29922;
+    --red: #da3633;
+    --orange: #e3790a;
+    --purple: #8957e5;
+    --gray: #8b949e;
+    --text: #e6edf3;
+    --text2: #c9d1d9;
+    --header-h: 49px;
+    --filter-h: 46px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; }
+
+  /* HEADER */
+  .header {
+    background: #0a0f16;
+    border-bottom: 1px solid var(--border);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    height: var(--header-h);
+  }
+  .header-logo { font-size: 20px; }
+  .header-title { font-weight: 700; font-size: 15px; flex: 1; }
+  .header-sub { font-size: 11px; color: var(--gray); }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--yellow); flex-shrink: 0; }
+  .status-dot.online { background: var(--green); }
+  .status-label { font-size: 10px; color: var(--gray); }
+
+  /* SQUAD TABS */
+  .squad-tabs {
+    display: flex;
+    gap: 4px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 8px;
+    padding: 3px;
+  }
+  .squad-tab {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 14px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    background: none;
+    color: var(--gray);
+    transition: all 0.15s;
+  }
+  .squad-tab.active {
+    background: var(--accent);
+    color: white;
+  }
+
+  /* FILTERS */
+  .filters {
+    padding: 8px 16px;
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    position: sticky;
+    top: var(--header-h);
+    z-index: 99;
+  }
+  .filter-btn {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--gray);
+    border-radius: 14px;
+    padding: 3px 10px;
+    font-size: 11.5px;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .filter-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+  /* THREE COLUMN LAYOUT */
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0,1.4fr) 280px 260px;
+    gap: 0;
+    align-items: start;
+    min-height: calc(100vh - var(--header-h) - var(--filter-h));
+  }
+  @media (max-width: 1100px) {
+    .layout { grid-template-columns: minmax(0,1.4fr) 260px; }
+    .col-todo { display: none; }
+  }
+  @media (max-width: 750px) {
+    .layout { grid-template-columns: 1fr; }
+    .col-avvisi, .col-todo { display: none; }
+  }
+
+  /* COLUMNS */
+  .col-eventi { padding: 12px 14px; min-width: 0; }
+  .col-avvisi, .col-todo {
+    padding: 12px 12px 12px 0;
+    position: sticky;
+    top: calc(var(--header-h) + var(--filter-h));
+    height: calc(100vh - var(--header-h) - var(--filter-h));
+    overflow-y: auto;
+  }
+
+  /* COLUMN BOXES */
+  .col-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 13px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .col-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--gray);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .col-title .badge {
+    background: var(--border);
+    color: var(--text2);
+    border-radius: 8px;
+    padding: 1px 7px;
+    font-size: 11px;
+  }
+  .col-date { font-size: 11px; color: var(--gray); margin-bottom: 8px; flex-shrink: 0; }
+  .col-scroll { flex: 1; overflow-y: auto; }
+
+  /* SECTION TITLE */
+  .section-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--gray);
+    margin: 16px 0 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title span {
+    background: var(--border);
+    color: var(--text2);
+    border-radius: 10px;
+    padding: 1px 7px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  /* EVENT CARDS */
+  .cards { display: flex; flex-direction: column; gap: 8px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    border-left: 3px solid var(--border);
+  }
+  .card.raduno { border-left-color: var(--accent); }
+  .card.regata { border-left-color: var(--green); }
+  .card.urgent { border-left-color: var(--red); }
+  .card.soon { border-left-color: var(--orange); }
+  .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .card-class { font-weight: 700; font-size: 13px; }
+  .card-type { font-size: 10px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; padding: 2px 7px; border-radius: 4px; flex-shrink: 0; }
+  .badge-raduno { background: rgba(26,110,216,0.2); color: var(--accent2); }
+  .badge-regata { background: rgba(46,160,67,0.2); color: #3fb950; }
+  .card-location { font-size: 12px; color: var(--gray); margin-top: 2px; }
+  .card-dates { font-size: 12px; color: var(--text2); margin-top: 4px; }
+  .card-alert { margin-top: 8px; padding: 6px 10px; border-radius: 6px; font-size: 11.5px; font-weight: 500; }
+  .alert-red { background: rgba(218,54,51,0.15); color: #ff7b72; border-left: 2px solid var(--red); }
+  .alert-orange { background: rgba(227,121,10,0.15); color: #ffa657; border-left: 2px solid var(--orange); }
+  .alert-yellow { background: rgba(210,153,34,0.15); color: #e3b341; border-left: 2px solid var(--yellow); }
+
+  /* CHECKBOXES */
+  .card-checks { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .check-item { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+  .check-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--green); cursor: pointer; }
+  .check-item label { font-size: 12px; color: var(--text2); cursor: pointer; user-select: none; }
+  .check-item input:checked + label { color: var(--green); text-decoration: line-through; text-decoration-color: rgba(46,160,67,0.5); }
+
+  /* MAIL TEMPLATE */
+  .mail-section { margin-top: 12px; }
+  .mail-toggle { background: none; border: 1px solid var(--border); color: var(--accent2); border-radius: 6px; padding: 4px 10px; font-size: 11.5px; cursor: pointer; width: 100%; text-align: left; }
+  .mail-body { display: none; margin-top: 6px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 11.5px; color: var(--text2); white-space: pre-wrap; line-height: 1.5; }
+  .mail-body.open { display: block; }
+  .copy-btn { margin-top: 6px; background: var(--accent); border: none; color: white; border-radius: 6px; padding: 4px 12px; font-size: 11.5px; cursor: pointer; float: right; }
+
+  /* EMPTY / LOADING */
+  .empty-state { text-align: center; color: var(--gray); padding: 40px 16px; font-size: 13px; }
+  .loading { text-align: center; color: var(--gray); padding: 60px 0; font-size: 13px; }
+
+  /* AVVISI ITEMS */
+  .avviso-item {
+    background: var(--bg);
+    border-radius: 7px;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    font-size: 12px;
+    line-height: 1.4;
+    position: relative;
+  }
+  .avviso-item strong { display: block; font-size: 11.5px; margin-bottom: 2px; }
+  .avviso-item .av-date { font-size: 11px; color: var(--gray); margin-top: 2px; }
+  .avviso-item.red { border-left: 3px solid var(--red); color: #ff7b72; }
+  .avviso-item.orange { border-left: 3px solid var(--orange); color: #ffa657; }
+  .avviso-item.yellow { border-left: 3px solid var(--yellow); color: #e3b341; }
+  .avviso-item.green { border-left: 3px solid var(--green); color: #3fb950; }
+  .av-actions { display: flex; gap: 4px; margin-top: 6px; }
+  .av-btn {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: none;
+    cursor: pointer;
+    color: var(--gray);
+  }
+  .av-btn:hover { color: var(--text); border-color: var(--gray); }
+  .av-btn.archive { color: var(--green); border-color: var(--green); }
+  .sidebar-empty { font-size: 12px; color: var(--gray); text-align: center; padding: 16px 0; }
+
+  /* TODO */
+  .todo-input-row { display: flex; gap: 5px; margin-bottom: 8px; flex-shrink: 0; }
+  .todo-input { flex: 1; min-width: 0; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 12px; padding: 5px 8px; outline: none; }
+  .todo-input:focus { border-color: var(--accent); }
+  .todo-select { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--gray); font-size: 11px; padding: 5px 3px; cursor: pointer; outline: none; }
+  .todo-add-btn { background: var(--accent); border: none; color: white; border-radius: 6px; padding: 5px 10px; font-size: 13px; cursor: pointer; }
+  .todo-section-label { font-size: 10px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; margin: 8px 0 4px; }
+  .todo-section-label.oggi { color: var(--red); }
+  .todo-section-label.settimana { color: var(--yellow); }
+  .todo-cat-label { font-size: 10px; color: var(--gray); font-weight: 600; margin: 5px 0 2px; }
+  .todo-item { display: flex; align-items: flex-start; gap: 6px; padding: 5px 0; border-bottom: 1px solid rgba(48,54,61,0.5); }
+  .todo-item:last-child { border-bottom: none; }
+  .todo-item input[type="checkbox"] { margin-top: 2px; width: 14px; height: 14px; accent-color: var(--green); cursor: pointer; flex-shrink: 0; }
+  .todo-text { flex: 1; font-size: 12px; color: var(--text2); line-height: 1.4; }
+  .todo-text.done { text-decoration: line-through; color: var(--gray); }
+  .todo-del { background: none; border: none; color: var(--gray); cursor: pointer; font-size: 14px; padding: 0 2px; line-height: 1; flex-shrink: 0; }
+  .todo-del:hover { color: var(--red); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">⛵</div>
+  <div style="flex:1">
+    <div class="header-title">FIV Dashboard SeU</div>
+    <div class="header-sub">Squadra Sviluppo e Under</div>
+  </div>
+  <div class="squad-tabs">
+    <button class="squad-tab active" onclick="setSquad('seu',this)">SeU</button>
+    <button class="squad-tab" onclick="setSquad('perf',this)">Perf</button>
+  </div>
+  <div id="status-dot" class="status-dot"></div>
+  <div id="status-label" class="status-label">…</div>
+</div>
+
+<div class="filters">
+  <button class="filter-btn active" onclick="setFilter('all',this)">Tutti</button>
+  <button class="filter-btn" onclick="setFilter('urgent',this)">🔴 Urgenti</button>
+  <button class="filter-btn" onclick="setFilter('raduni',this)">Raduni</button>
+  <button class="filter-btn" onclick="setFilter('regate',this)">Regate</button>
+  <button class="filter-btn" onclick="setFilter('49er',this)">49er</button>
+  <button class="filter-btn" onclick="setFilter('49erFX',this)">49erFX</button>
+  <button class="filter-btn" onclick="setFilter('nacra',this)">Nacra 17</button>
+  <button class="filter-btn" onclick="setFilter('470',this)">470</button>
+  <button class="filter-btn" onclick="setFilter('ilca7',this)">ILCA 7</button>
+  <button class="filter-btn" onclick="setFilter('ilca6',this)">ILCA 6</button>
+  <button class="filter-btn" onclick="setFilter('iqm',this)">iQFoil M</button>
+  <button class="filter-btn" onclick="setFilter('iqf',this)">iQFoil F</button>
+  <button class="filter-btn" onclick="setFilter('kitem',this)">Kite M</button>
+  <button class="filter-btn" onclick="setFilter('kitef',this)">Kite F</button>
+</div>
+
+<div class="layout">
+
+  <!-- COLONNA 1: EVENTI -->
+  <div class="col-eventi" id="main">
+    <div class="loading">Caricamento dati…</div>
+  </div>
+
+  <!-- COLONNA 2: AVVISI -->
+  <div class="col-avvisi">
+    <div class="col-box">
+      <div class="col-title">
+        📋 Avvisi
+        <span class="badge" id="avvisi-count"></span>
+      </div>
+      <div class="col-date" id="sidebar-date"></div>
+      <div class="col-scroll" id="sidebar-avvisi">
+        <div class="sidebar-empty">Nessun avviso</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COLONNA 3: TODO -->
+  <div class="col-todo">
+    <div class="col-box">
+      <div class="col-title">✅ Cose da fare</div>
+      <div class="todo-input-row">
+        <input class="todo-input" id="todo-input" type="text" placeholder="Nuova attività…" onkeydown="if(event.key==='Enter')addTodo()">
+        <select class="todo-select" id="todo-cat">
+          <option value="telefonate">📞</option>
+          <option value="mail">✉️</option>
+          <option value="altro">📌</option>
+        </select>
+        <select class="todo-select" id="todo-when">
+          <option value="oggi">Oggi</option>
+          <option value="settimana">Sett.</option>
+        </select>
+        <button class="todo-add-btn" onclick="addTodo()">+</button>
+      </div>
+      <div class="col-scroll">
+        <div class="todo-section-label oggi">Oggi</div>
+        <div id="todo-oggi-list"></div>
+        <div class="todo-section-label settimana">Questa settimana</div>
+        <div id="todo-sett-list"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const APPS_SCRIPT_URL = '/api/proxy';
+
+// ─── STORAGE ─────────────────────────────────────────────────────
+function storageKey(eventId, field) { return `fiv_${eventId}_${field}`; }
+function getCheck(eventId, field) { try { return localStorage.getItem(storageKey(eventId, field)) === '1'; } catch(e) { return false; } }
+function setCheck(eventId, field, val) { try { localStorage.setItem(storageKey(eventId, field), val ? '1' : '0'); } catch(e) {} }
+
+// Avvisi nascosti/archiviati
+function getAvvisoState(key) { try { return localStorage.getItem('av_' + key) || ''; } catch(e) { return ''; } }
+function setAvvisoState(key, val) { try { localStorage.setItem('av_' + key, val); } catch(e) {} }
+function avvisoKey(a) { return `${a.tipo}_${a.classe}_${a.nome}`; }
+
+// ─── FALLBACK ─────────────────────────────────────────────────────
+const FALLBACK_EVENTS = [
+  { id: 'ev001', classe: '49er', tipo: 'regata', nome: 'Europei Assoluti', luogo: 'Kiel, Germania', dataInizio: '2026-07-01', dataFine: '2026-07-06' },
+  { id: 'ev002', classe: 'ILCA 7', tipo: 'raduno', nome: 'Raduno SeU', luogo: 'Riva del Garda', dataInizio: '2026-07-08', dataFine: '2026-07-12' },
+];
+
+// ─── STATE ────────────────────────────────────────────────────────
+let allEvents = [];
+let currentFilter = 'all';
+let currentSquad = 'seu'; // 'seu' o 'perf'
+const TODAY = new Date(); TODAY.setHours(0,0,0,0);
+
+
+function setSquad(squad, btn) {
+  currentSquad = squad;
+  document.querySelectorAll('.squad-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+  renderSidebarAvvisi();
+}
+
+function getSquadEvents() {
+  return allEvents.filter(ev => ev.squad === currentSquad);
+}
+
+// ─── FETCH ────────────────────────────────────────────────────────
+async function loadData() {
+  try {
+    const resp = await fetch(APPS_SCRIPT_URL);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    if (!Array.isArray(data) || !data.length) throw new Error('empty');
+    allEvents = parseSheetData(data);
+    document.getElementById('status-dot').classList.add('online');
+    document.getElementById('status-label').textContent = 'Live';
+  } catch(err) {
+    allEvents = FALLBACK_EVENTS.map(e => ({...e, start: new Date(e.dataInizio), end: new Date(e.dataFine)}));
+    document.getElementById('status-label').textContent = 'Offline';
+  }
+  render();
+  renderSidebarAvvisi();
+}
+
+// ─── PARSE ────────────────────────────────────────────────────────
+const CLASS_NAMES = {
+  '49er':'49er','49erSU':'49er SeU','FX':'49erFX','FXSU':'49erFX SeU',
+  'Nacra':'Nacra 17','NacraSU':'Nacra 17 SeU','470':'470','470SU':'470 SeU',
+  'ILCA7':'ILCA 7','ILCA7SU':'ILCA 7 SeU','ILCA6':'ILCA 6','ILCA6SU':'ILCA 6 SeU',
+  'iQM':'iQFoil M','iQMSU':'iQFoil M SeU','iQF':'iQFoil F','iQFSU':'iQFoil F SeU',
+  'KiteM':'Formula Kite M','KiteF':'Formula Kite F','KiteMSU':'Formula Kite M SeU','KiteFSU':'Formula Kite F SeU'
+};
+
+function parseSheetData(data) {
+  return data.map((row, i) => ({
+    id: `ev_${row.class}_${row.squad}_${row.start}_${i}`,
+    rawClass: row.class,
+    squad: row.squad || 'perf',
+    classe: CLASS_NAMES[row.class] || row.class,
+    tipo: row.is_regata ? 'regata' : 'raduno',
+    nome: row.location || '',
+    luogo: row.location || '',
+    dataInizio: row.start,
+    dataFine: row.end,
+    start: new Date(row.start),
+    end: new Date(row.end),
+  }));
+}
+
+// ─── HELPERS ──────────────────────────────────────────────────────
+function daysDiff(date) {
+  const d = new Date(date); d.setHours(0,0,0,0);
+  return Math.round((d - TODAY) / 86400000);
+}
+function fmtDate(d) {
+  if (!d || isNaN(d)) return '–';
+  return d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+function fmtRange(ev) { return `${fmtDate(ev.start)} → ${fmtDate(ev.end)}`; }
+
+// ─── DEADLINES ────────────────────────────────────────────────────
+function getDeadlines(ev) {
+  const deadlines = [];
+  const dStart = daysDiff(ev.start);
+  const dEnd = daysDiff(ev.end);
+
+  if (ev.tipo === 'raduno') {
+    const dConv = dStart - 15;
+    const dAgg = dStart - 8;
+    const convDone = getCheck(ev.id, 'mailconv');
+    const mailDone = getCheck(ev.id, 'mailatt');
+    if (!convDone && dEnd >= 0 && dConv <= 20)
+      deadlines.push({ tipo: 'conv', label: '📨 Richiesta convocazione Bodrato', daysLeft: dConv });
+    if (dEnd >= 0 && dAgg >= 0 && dAgg <= 15)
+      deadlines.push({ tipo: 'agg', label: '📋 Scadenza aggregazioni', daysLeft: dAgg });
+  }
+
+  if (ev.tipo === 'regata') {
+    const dPrev = dStart - 7;
+    const prevDone = getCheck(ev.id, 'prev');
+    if (!prevDone && dStart >= 0 && dPrev <= 14)
+      deadlines.push({ tipo: 'prev', label: '🎯 Previsione risultati dai coach', daysLeft: dPrev });
+    const daysToAlleg = daysDiff(new Date(ev.end.getTime() + 30 * 86400000));
+    if (daysToAlleg >= 0 && daysToAlleg <= 15 && dEnd < 0)
+      deadlines.push({ tipo: 'alleg', label: '🧾 Allegato IV rendicontazione spese', daysLeft: daysToAlleg });
+  }
+  return deadlines;
+}
+
+function alertClass(d) {
+  if (d <= 0) return 'alert-red';
+  if (d <= 2) return 'alert-red';
+  if (d <= 5) return 'alert-orange';
+  return 'alert-yellow';
+}
+function alertText(d) {
+  if (d < 0) return `Scaduta ${Math.abs(d)}g fa`;
+  if (d === 0) return 'Scade oggi';
+  if (d === 1) return 'Scade domani';
+  return `Tra ${d} giorni`;
+}
+
+// ─── MAIL TEMPLATES ───────────────────────────────────────────────
+function mailBodyConv(ev) {
+  return `Oggetto: Richiesta convocazione – ${ev.classe} ${ev.nome}\n\nBuongiorno,\n\nti chiedo di procedere con la convocazione ufficiale:\n\nClasse: ${ev.classe}\nLuogo: ${ev.luogo}\nDate: ${fmtDate(ev.start)} – ${fmtDate(ev.end)}\nSquadra: SeU\n\n[inserire nominativi atleti]\n\nGrazie,\nEgon Vigna\nDT SeU – FIV`;
+}
+function mailBodyPrev(ev) {
+  return `Oggetto: Previsione risultati – ${ev.classe} ${ev.nome}\n\nCiao,\n\nin vista della regata:\n\nClasse: ${ev.classe}\nLuogo: ${ev.luogo}\nDate: ${fmtDate(ev.start)} – ${fmtDate(ev.end)}\n\nti chiedo di inviarmi entro 2 giorni una previsione sui risultati attesi per gli atleti SeU.\n\nGrazie,\nEgon Vigna\nDT SeU – FIV`;
+}
+
+// ─── FILTER ───────────────────────────────────────────────────────
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+function matchFilter(ev) {
+  if (currentFilter === 'all') return true;
+  if (currentFilter === 'raduni') return ev.tipo === 'raduno';
+  if (currentFilter === 'regate') return ev.tipo === 'regata';
+  if (currentFilter === 'urgent') return getDeadlines(ev).some(d => d.daysLeft >= 0 && d.daysLeft <= 5);
+  const c = ev.classe.toLowerCase();
+  if (currentFilter === '49er') return c.includes('49er') && !c.includes('fx');
+  if (currentFilter === '49erFX') return c.includes('49erfx') || c.includes('49er fx');
+  if (currentFilter === 'nacra') return c.includes('nacra');
+  if (currentFilter === '470') return c.includes('470');
+  if (currentFilter === 'ilca7') return /ilca 7/.test(c);
+  if (currentFilter === 'ilca6') return /ilca 6/.test(c);
+  if (currentFilter === 'iqm') return c.includes('iqfoil m');
+  if (currentFilter === 'iqf') return c.includes('iqfoil f');
+  if (currentFilter === 'kitem') return c.includes('kite m');
+  if (currentFilter === 'kitef') return c.includes('kite f');
+  return true;
+}
+
+// ─── RENDER EVENTI ────────────────────────────────────────────────
+function render() {
+  const main = document.getElementById('main');
+  const filtered = getSquadEvents().filter(matchFilter);
+  const active = filtered.filter(ev => ev.start <= TODAY && ev.end >= TODAY);
+  const upcoming = filtered.filter(ev => ev.start > TODAY).sort((a,b) => a.start - b.start);
+  const past = filtered.filter(ev => ev.end < TODAY).sort((a,b) => b.end - a.end);
+
+  let html = '';
+  if (active.length) {
+    html += `<div class="section-title">🔴 In corso <span>${active.length}</span></div><div class="cards">`;
+    active.forEach(ev => html += makeCard(ev));
+    html += '</div>';
+  }
+  if (upcoming.length) {
+    html += `<div class="section-title">📅 In programma <span>${upcoming.length}</span></div><div class="cards">`;
+    upcoming.forEach(ev => html += makeCard(ev));
+    html += '</div>';
+  }
+  if (past.length) {
+    html += `<div class="section-title" style="cursor:pointer" onclick="togglePast(this)">
+      <span style="color:var(--gray)">▶</span> Passati <span>${past.length}</span>
+    </div>
+    <div id="past-cards" class="cards" style="display:none">`;
+    past.forEach(ev => html += makeCard(ev));
+    html += '</div>';
+  }
+  if (!html) html = '<div class="empty-state">Nessuna attività trovata</div>';
+  main.innerHTML = html;
+}
+
+function togglePast(el) {
+  const cards = document.getElementById('past-cards');
+  const arrow = el.querySelector('span');
+  const open = cards.style.display === 'none';
+  cards.style.display = open ? 'flex' : 'none';
+  if (open) { cards.style.flexDirection = 'column'; cards.style.gap = '8px'; }
+  arrow.textContent = open ? '▼' : '▶';
+}
+
+function makeCard(ev) {
+  const deadlines = getDeadlines(ev);
+  const isReg = ev.tipo === 'regata';
+  const urgentDl = deadlines.find(d => d.daysLeft >= -3 && d.daysLeft <= 5);
+  let borderClass = isReg ? 'regata' : 'raduno';
+  if (urgentDl) borderClass = urgentDl.daysLeft <= 2 ? 'urgent' : 'soon';
+
+  let html = `<div class="card ${borderClass}">
+    <div class="card-header">
+      <div>
+        <div class="card-class">${ev.classe}</div>
+        <div class="card-location">📍 ${ev.luogo || '–'}</div>
+      </div>
+      <span class="card-type ${isReg ? 'badge-regata' : 'badge-raduno'}">${isReg ? 'Regata' : 'Raduno'}</span>
+    </div>
+    <div class="card-dates">${fmtRange(ev)}</div>`;
+
+  deadlines.forEach(dl => {
+    html += `<div class="card-alert ${alertClass(dl.daysLeft)}">${dl.label} — <strong>${alertText(dl.daysLeft)}</strong></div>`;
+  });
+
+  html += `<div class="card-checks">`;
+  if (!isReg) {
+    const ma = getCheck(ev.id, 'mailatt') ? 'checked' : '';
+    const mc = getCheck(ev.id, 'mailconv') ? 'checked' : '';
+    html += `
+      <label class="check-item"><input type="checkbox" ${ma} onchange="saveCheck('${ev.id}','mailatt',this.checked)"><label>Mail attività inviata</label></label>
+      <label class="check-item"><input type="checkbox" ${mc} onchange="saveCheck('${ev.id}','mailconv',this.checked)"><label>Mail convocazione inviata</label></label>`;
+  } else {
+    const pv = getCheck(ev.id, 'prev') ? 'checked' : '';
+    html += `<label class="check-item"><input type="checkbox" ${pv} onchange="saveCheck('${ev.id}','prev',this.checked)"><label>Previsione richiesta</label></label>`;
+  }
+  html += `</div>`;
+
+  if (!isReg) {
+    html += `<div class="mail-section">
+      <button class="mail-toggle" onclick="toggleMail(this)">✉️ Template mail convocazione</button>
+      <div class="mail-body">${mailBodyConv(ev)}<br><button class="copy-btn" onclick="copyMail(this)">Copia</button></div>
+    </div>`;
+  } else {
+    html += `<div class="mail-section">
+      <button class="mail-toggle" onclick="toggleMail(this)">🎯 Template previsione risultati</button>
+      <div class="mail-body">${mailBodyPrev(ev)}<br><button class="copy-btn" onclick="copyMail(this)">Copia</button></div>
+    </div>`;
+  }
+
+  html += `</div>`;
+  return html;
+}
+
+function saveCheck(eventId, field, val) {
+  setCheck(eventId, field, val);
+  render();
+  renderSidebarAvvisi();
+}
+
+function toggleMail(btn) {
+  const body = btn.nextElementSibling;
+  body.classList.toggle('open');
+}
+function copyMail(btn) {
+  const text = btn.parentElement.textContent.replace('Copia','').trim();
+  navigator.clipboard.writeText(text).then(() => { btn.textContent = 'Copiato ✓'; setTimeout(() => btn.textContent = 'Copia', 1800); });
+}
+
+// ─── SIDEBAR AVVISI ───────────────────────────────────────────────
+function collectAvvisi() {
+  const avvisi = [];
+  getSquadEvents().filter(ev => ev.tipo === 'regata' && ev.start <= TODAY && ev.end >= TODAY).forEach(ev => {
+    avvisi.push({ tipo: 'regata_corso', classe: ev.classe, nome: ev.nome, luogo: ev.luogo, daysLeft: 0 });
+  });
+  getSquadEvents().forEach(ev => {
+    getDeadlines(ev).forEach(dl => {
+      if (dl.daysLeft >= 0 && dl.daysLeft <= 15) {
+        avvisi.push({ tipo: dl.tipo, label: dl.label, classe: ev.classe, nome: ev.nome, daysLeft: dl.daysLeft });
+      }
+    });
+  });
+  return avvisi.sort((a,b) => a.daysLeft - b.daysLeft);
+}
+
+function urgencyColor(d) {
+  if (d <= 1) return 'red';
+  if (d <= 4) return 'orange';
+  if (d <= 7) return 'yellow';
+  return 'green';
+}
+
+function renderSidebarAvvisi() {
+  const avvisi = collectAvvisi();
+  const el = document.getElementById('sidebar-avvisi');
+  const countEl = document.getElementById('avvisi-count');
+  const dateEl = document.getElementById('sidebar-date');
+
+  dateEl.textContent = TODAY.toLocaleDateString('it-IT', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+
+  // Filtra nascosti (solo oggi) e archiviati
+  const todayKey = TODAY.toISOString().split('T')[0];
+  const visible = avvisi.filter(a => {
+    const k = avvisoKey(a);
+    const state = getAvvisoState(k);
+    if (state === 'archived') return false;
+    if (state === `hidden_${todayKey}`) return false;
+    return true;
+  });
+
+  countEl.textContent = visible.length || '';
+
+  if (!visible.length) {
+    el.innerHTML = '<div class="sidebar-empty">Nessun avviso attivo</div>';
+    return;
+  }
+
+  let html = '';
+  visible.forEach(a => {
+    const k = avvisoKey(a);
+    if (a.tipo === 'regata_corso') {
+      html += `<div class="avviso-item green">
+        <strong>⚓ ${a.classe} – ${a.nome}</strong>
+        📍 ${a.luogo}
+        <div class="av-date">In corso oggi</div>
+        <div class="av-actions">
+          <button class="av-btn" onclick="hideAvviso('${k}')">Nascondi oggi</button>
+          <button class="av-btn archive" onclick="archiveAvviso('${k}')">✓ Fatto</button>
+        </div>
+      </div>`;
+    } else {
+      const col = urgencyColor(a.daysLeft);
+      const txt = a.daysLeft === 0 ? 'Scade oggi' : a.daysLeft === 1 ? 'Scade domani' : `Tra ${a.daysLeft} giorni`;
+      const scadDate = new Date(TODAY.getTime() + a.daysLeft * 86400000);
+      const scadStr = scadDate.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      html += `<div class="avviso-item ${col}">
+        <strong>${a.label}</strong>
+        ${a.classe} – ${a.nome}
+        <div class="av-date">📅 ${scadStr} — ${txt}</div>
+        <div class="av-actions">
+          <button class="av-btn" onclick="hideAvviso('${k}')">Nascondi oggi</button>
+          <button class="av-btn archive" onclick="archiveAvviso('${k}')">✓ Fatto</button>
+        </div>
+      </div>`;
+    }
+  });
+  el.innerHTML = html;
+}
+
+function hideAvviso(k) {
+  const todayKey = TODAY.toISOString().split('T')[0];
+  setAvvisoState(k, `hidden_${todayKey}`);
+  renderSidebarAvvisi();
+}
+function archiveAvviso(k) {
+  setAvvisoState(k, 'archived');
+  renderSidebarAvvisi();
+}
+
+// ─── TODO ─────────────────────────────────────────────────────────
+const CAT_ICONS = { telefonate: '📞', mail: '✉️', altro: '📌' };
+const CAT_LABELS = { telefonate: 'Telefonate', mail: 'Mail', altro: 'Altro' };
+const CATS = ['telefonate', 'mail', 'altro'];
+
+function loadTodos() { try { return JSON.parse(localStorage.getItem('fiv_todos') || '[]'); } catch(e) { return []; } }
+function saveTodos(todos) { try { localStorage.setItem('fiv_todos', JSON.stringify(todos)); } catch(e) {} }
+
+function addTodo() {
+  const input = document.getElementById('todo-input');
+  const when = document.getElementById('todo-when').value;
+  const cat = document.getElementById('todo-cat').value;
+  const text = input.value.trim();
+  if (!text) return;
+  const todos = loadTodos();
+  todos.push({ id: Date.now(), text, when, cat, done: false });
+  saveTodos(todos);
+  input.value = '';
+  renderTodos();
+}
+function toggleTodo(id) {
+  const todos = loadTodos();
+  const t = todos.find(t => t.id === id);
+  if (t) t.done = !t.done;
+  saveTodos(todos);
+  renderTodos();
+}
+function deleteTodo(id) {
+  saveTodos(loadTodos().filter(t => t.id !== id));
+  renderTodos();
+}
+function makeItem(t) {
+  return `<div class="todo-item">
+    <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTodo(${t.id})">
+    <span class="todo-text ${t.done ? 'done' : ''}">${t.text}</span>
+    <button class="todo-del" onclick="deleteTodo(${t.id})">×</button>
+  </div>`;
+}
+function renderSection(todos, elId) {
+  const el = document.getElementById(elId);
+  if (!todos.length) { el.innerHTML = '<div class="sidebar-empty" style="padding:4px 0">Nessuna attività</div>'; return; }
+  let html = '';
+  CATS.forEach(cat => {
+    const items = todos.filter(t => (t.cat || 'altro') === cat);
+    if (!items.length) return;
+    html += `<div><div class="todo-cat-label">${CAT_ICONS[cat]} ${CAT_LABELS[cat]}</div>${items.map(makeItem).join('')}</div>`;
+  });
+  el.innerHTML = html;
+}
+function renderTodos() {
+  const todos = loadTodos();
+  renderSection(todos.filter(t => t.when === 'oggi'), 'todo-oggi-list');
+  renderSection(todos.filter(t => t.when === 'settimana'), 'todo-sett-list');
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────
+loadData();
+renderTodos();
+</script>
+</body>
+</html>
